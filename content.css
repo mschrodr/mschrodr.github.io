@@ -1,0 +1,179 @@
+body {background-image: url
+}
+
+#header h1{
+	font: 46px Georgia; 
+	letter-spacing: 2px;
+	color:white; /*rgb(255,51,0);*/
+}
+
+#content ul{
+	font-size: 16px;
+}
+
+#header p{
+	font: 10px Georgia; 
+	letter-spacing: 2px;
+	float: bottom;
+	padding-top: 50px;
+	color: white;
+}
+
+#content .myimage{
+	float: left;
+	margin: 0 30px 18px 0;
+}
+
+#content h1{
+	font: 26px Georgia, serif; 
+	letter-spacing: 2px;
+	margin: 0 0 20px 0;
+	padding-left: 10px;
+	padding-top: 10px;
+}
+
+#content h2{
+	font: 36x Georgia, serif;
+	font-weight: bold;
+	letter-spacing: 2px;
+	margin: 0 0 20px 0;
+	text-align: center;
+	padding-left: 10px;
+	padding-top: 25px;
+}
+
+#content p, dl{
+	font: 14px Georgia, serif; 
+	letter-spacing: 1px;
+	margin: 0 0 20px 0;
+	padding-left: 10px;
+}
+
+#content h4{
+	padding-left: 10px;
+}
+
+
+
+#content #report {
+ 	width: 820px;
+ 	margin: 20px auto;
+ 	padding: 15px 0px 30px 65px;
+ }
+
+#content #report .leftLabel {
+	float: left;
+	clear: left;
+	margin: 20px 20px 0 0;
+	width: 130px;
+	font-size: 16px; 
+	font-weight: bold;
+	text-align: right; 
+	text-transform: uppercase;
+}
+
+#content #report .rightInput {
+	width: 500px; 
+	height: 35px;
+	padding: 0 20px 0px 20px;
+	margin: 20px 0 0 0;
+	font-family: sans-serif; 
+	font-size: 16px;
+}
+
+#content #report fieldset{
+	width: 670px;
+	text-align: center; 
+	text-transform: uppercase;
+	font-weight: bold;
+	margin: 20px 0 0 0;
+}
+
+#content #report fieldset legend {
+	text-align: left;
+}
+
+#content #report fieldset .radioLabel {
+	text-transform: capitalize;
+	margin-left: 50px;
+	font-weight: normal;
+}
+
+#content #report input[type = submit], #content #report input[type=reset] {
+	width: 180px; 
+	height: 52px;
+	margin: 25px 130px 25px auto;
+	float: right;
+}
+#content textarea{
+	width: 700px; 
+	height: 100px;
+	padding: 10px 20px 0px 20px;
+	margin: 20px 0 0 0;
+	font-family: sans-serif; 
+	font-size: 16px;
+}
+
+#content td{
+	border-width: 2px;
+	border-style: solid;
+	border-color: #999;
+	background-color: #99CCCC;
+	vertical-align: top;
+	padding: 2px 4px 2px 2px;
+	color: black;
+}
+#content th{
+	text-align: center;
+	font-weight: bold;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #999;
+	background-color: #996633;
+	color: white;
+}
+#content table{
+	margin: 30px auto;
+	border-width: 2px;
+	border-style: solid;
+	border-color: #999;
+	background-color: #CCCC99;
+	width: 860px;
+}
+
+
+#videoList{
+
+	width: 947px;
+	min-width: 100px;
+	margin: 0 auto;
+}
+#videoList h3{
+	font: 12px Georgia, serif; 
+	letter-spacing: 1px;
+	margin-left: 20px;
+}
+
+#myPlayer {
+	width: 640px;
+	height: 390px;
+	margin: 10px 10px;
+	padding: 10px 10px;
+}
+#myPlayer h3, #myplayer p {
+	padding: 10px 10px;
+	margin: 10px 10px;
+}
+.videoItem img{
+	width: 100px;
+}
+.videoItem a {
+	text-decoration: none;
+	color: #777;
+}
+
+#content img, embed, iframe {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}

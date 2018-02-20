@@ -1,0 +1,86 @@
+body {height: 100%; margin: 0; padding: 0px; background-color:white; background-image: url("images/Heinrich_Berann_NPS_Yosemite.jpg")
+}
+
+html{ height: 100%;}
+
+#container{
+	width: 95%;
+	margin: 0 auto;
+}
+
+#header{
+	height: 180px;
+	margin: 10px 0 0 0;
+	padding-left: 10px;
+	background: url("images/Washington_DC.png");
+	background-repeat:no-repeat;
+	background-size: 100% ;
+	border: 1px solid #333;
+	/*border-right: 10px solid #CCCC99; 
+	border-left: 10px solid #CCCC99; 
+	border-bottom: 3px solid #999966;
+	border-top: 10px solid #999966;*/
+}
+
+#content {
+	height: 0 auto;
+	border-right: 1px solid #CCCC99; 
+	border-left: 1px solid #CCCC99; 
+	border-bottom: 1px solid #999966;
+	border-top: 1px solid #999966;
+	background-color: #ffe4b5;
+}
+
+
+#nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+	background-color: #333;
+}
+
+#nav li {
+    float: left;
+}
+
+#nav li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+#nav li a:hover {
+    background-color: #111;
+}
+
+
+
+
+
+#footer{
+	font-family:Times;
+	text-align:left;
+}
+
+#content <h1>{
+	color: gray;
+}
+
+#mapCanvas { 
+	height: 600px; 
+	width: 800px; 
+	margin: 0 auto; 
+	padding: 0px; 
+	border: 5px solid #606060
+}
+
+#map { 
+	height: 600px; 
+	width: 800px; 
+	margin: 0 auto; 
+	padding: 0px; 
+	border: 5px solid #606060
+}
