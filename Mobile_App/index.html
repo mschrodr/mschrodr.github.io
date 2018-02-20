@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
+		<link rel="stylesheet" href="css/mystyles.css" />
+		<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+		<script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
+		<script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
+		
+		<style>
+			#content {
+                padding: 0;
+                position : absolute;
+                top : 40px; 
+                right : 0;
+                bottom : 40px; 
+                left : 0;    
+            }
+		</style>
+		<script>
+			$(document).on("mobileinit", function(){
+				//Change global settings using $.mobile object
+				$.mobile.defaultPageTransition="fade";
+				$.mobile.page.prototype.options.headerTheme="b";
+				$.mobile.page.prototype.options.footerTheme="b";
+			});
+		</script>
+
+		
+		
+		
+		
+		<script>
+		
+			var geocoder;
+			var currentLocation;
+			var searchResults;
+			var map13;
+			var map;
+			var directionsDisplay;
+			var directionsService;
+			
+			
+			//Init Function
+			function init(){
+				if(navigator.geolocation){
+					navigator.geolocation.watchPosition(showLocation, locationError);
+				} else{
+					alert("Geolocation not Supported on this device");
+					return;
+				}
+			
+				$("#NPS").on("click", function(){
+					queryPlaces('National Park Service');
+				});
+				$("#FS").on("click", function(){
+					queryPlaces('Fire Station');
+				});
+				$("#USFS").on("click", function(){
+					queryPlaces('Forest Service');
+				});
+			}
+			
+			
+			//Update Function
+			function updateDist(value){
+				//alert("updateDist" + value);
+				$("#distVal").html( ""+ value + " meters");
+			}
+			$(document).on('pageinit', init); //window.onload
+			$(document).on('pageinit', "#videos", function(){
+				$.ajax({
+					url : "https://gdata.youtube.com/feeds/api/videos",
+					data : "alt=json&q=wildfire+montana+forest&max-results=12&v=2",
+					dataType: "jsonp",
+					success: listVideos
+				});
+			});
+			$(document).on("pageinit", "#photos", function(){
+				$.ajax({
+					url : "http://api.flickr.com/services/feeds/photos_public.gne",
+					data : "format=json&tags=fireecology",
+					dataType: "jsonp",
+				});
+			
+			});
+			
+			function jsonFlickrFeed(data){
+				//console.log(data);
+				var output='';
+				for (var i = 0; i < data.items.length; i++){
+					var title = data.items[i].title;
+					var link = data.items[i].media.m.substring(0, 57);
+					var blocktype = ((i%3)==2) ? 'c': ((i%3)===1) ? 'b' : 'a';
+					output += '<div class="ui-block-' + blocktype + '">';
+					output += '<a href="#showPhoto" data-transition="fade" onclick="showPhoto(\'' + link +'\',\'' + title + '\')">';
+					output += '<img src="' + link + '_q.jpg" alt="' + title + '" />';
+					output += '</a>';
+					output += '</div>';
+				}//goes through each photo
+				$('#photoList').html(output);
+			}//jsonFlickrFeed
+			
+			function showPhoto(link, title) {
+				var output='<a href="#photos" data-transition="fade">';
+				output += '<img src="' + link + '_b.jpg" alt="' + title + '" />';
+				output += '</a>';
+				$('#myPhoto').html(output);
+			}
+			
+			
+			function listVideos(data) {
+				//console.log(data);
+				var output = '';
+				for ( var i=0; i<data.feed.entry.length; i++) {
+					
+					var title = data.feed.entry[i].title.$t;
+					var thumbnail = data.feed.entry[i].media$group.media$thumbnail[0].url;
+					var description = data.feed.entry[i].media$group.media$description.$t;
+					var id = data.feed.entry[i].id.$t.substring(27); 
+					
+					var blockType = ((i % 2)===1) ? 'b': 'a';
+					output += '<div class="ui-block-' + blockType + '">';
+					output += '<a href="#videoPlayer" data-transistion="fade" onclick="playVideo(\''+ id +'\',\'' + title + '\',\'' + escape(description) + '\')">';
+					output += '<h3>' + title + '</h3>';
+					output += '<img src="' + thumbnail + '" alt="' + title + '" />';
+					output += "</a>";
+					output += "</div>";
+				}
+				$('#videoList').html(output);
+			}
+			
+			function playVideo(id, title, description){
+				var output ='<iframe src="http://www.youtube.com/embed/' + id +'?autoplay=1" frameborder="0" ></iframe>';
+				output += '<h3>' + title + '</h3>';
+				output += '<p>' + unescape(description) + '</p>';
+				$('#myPlayer').html(output);
+			}
+
+
+			//ShowLocation Function
+			function showLocation(location) {
+				
+				geocoder = new google.maps.Geocoder();
+				currentLocation = new google.maps.LatLng(location.coords.latitude, location.coords.longitude);
+				$("#lat").attr("value", currentLocation.lat());
+				$("#lng").attr("value", currentLocation.lng());
+				geocoder.geocode({'location': currentLocation}, function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						if (results[0]) {
+							var address = results[0].formatted_address;
+							$('#loc').html(results[0].formatted_address);
+							var info = "Latitude : "+ location.coords.latitude + " Logitude : " + location.coords.longitude +"<br />";
+							info += "Location accurate within " + location.coords.accuracy + " meters <br /> Last Updated: " + new Date(location.timestamp).toLocaleString();
+							$('#acc').html(info);
+
+						}else{
+							alert('No results found');
+						}//end of if
+						if(!map) initMap(), initMap13(), initMap12(), initMap11(), initMap10(), initMap85();
+					} else {
+						$('#loc').html('Geocoder failed due to: ' + status); //$('#loc').html(Unable to determine address');
+					}//end of if
+					$("#address").attr("value", results[0].formatted_address);
+				});//end of geocode() {
+			}//end of showlocation function
+
+
+
+			//Location Error Function
+			function locationError(error){
+				switch (error.code){
+					case error.PERMISSION_DENIED:
+						alert("Geolocation access denied or disabled. To enable geolocation " +
+						"on your iPhone, go to Settings > General > Location Services");
+						break;
+					case error.POSITION_UNAVAILABLE:
+						alert("Current location not avilable");
+						break;
+					case error.TIMEOUT:
+						alert("Timeout");
+						break;
+					default:
+						alert("unknown error");
+						break;
+				}
+			}
+			
+			
+			//queryPlaces Function
+			function queryPlaces(queryVal) {
+				var dist = $("#distVal").text().split(" ");
+				var service = new google.maps.places.PlacesService(map);
+				var request = {
+					location: currentLocation,
+					radius: dist[0],
+					keyword: queryVal,
+					rankBy : google.maps.places.DISTANCE
+				};
+				service.nearbySearch(request, buildPlacesList);
+			}//end of queryPlaces
+			
+			
+			//buildPlacesList Function
+			function buildPlacesList(results, status) {
+				//console.log(results); - use it only for debugging
+				searchResults = results;
+				$("#searchResults li").remove();
+				if (status == google.maps.places.PlacesServiceStatus.OK) {
+					if(results.length == 0){
+						var noResults = $("<li>").html("No results found within search radius. use the settings option to increase the search distance.");
+						$("#searchResults").append(noResults);
+						return;
+					}
+					for(var i= 0; i < results.length; i++) {
+						var content;
+						if(results[i].website) {
+							content = "<a target='_blank' href='" + results[i].website + "'> <b>" + results[i].name + "</b></a>";
+						}else{
+							content = "<a> <b>" + results[i].name + "</b><br />";
+						}
+						content = content + results[i].vicinity + "<br />";
+						if(!isNaN(results[i].rating)) {
+							content = content + "Average Rating: " + results[i].rating + "<br /></a>";
+						}
+						else{
+							content = content + "Average Rating: No Reviews <br /></a>";
+						}
+						content = content + "<a href='#mapView' onClick='calculateRoute("+ i +")' > Route </a>";
+						var resultItem = $("<li>").html(content);
+						$("#searchResults").append(resultItem);
+					}//end of for
+					$("#searchResults").listview("refresh");
+				}//if
+				else{
+					alert("google place services " + google.maps.places.PlacesServiceStatus);
+				}
+			}
+			
+			
+			
+			//initMap Function
+			function initMap(){
+				directionsService = new google.maps.DirectionsService();
+				directionsDisplay = new google.maps.DirectionsRenderer();
+				var mapOptions = {
+					zoom: 14,
+					mapTypeId: google.maps.MapTypeId.ROADMAP,
+					center: currentLocation
+				};
+				map = new google.maps.Map(document.getElementById('mapDiv'), mapOptions);
+				directionsDisplay.setMap(map);
+			}
+			
+			function initMap13(){
+				var defaultLocation13 = new google.maps.LatLng(47, -110);
+				var mapOptions13 = {
+					zoom: 6,
+					mapTypeId: google.maps.MapTypeId.TERRAIN,
+				};
+				map13 = new google.maps.Map(document.getElementById('mapCanvas'), mapOptions13);
+				map13.setCenter(defaultLocation13);
+				var ctaLayer = new google.maps.KmlLayer('http://www.terpconnect.umd.edu/~mschrodr/Geog650KMZ/2013Fire.kmz');
+				ctaLayer.setMap(map13);
+			}
+			function initMap10(){
+				var defaultLocation10 = new google.maps.LatLng(47, -110);
+				var mapOptions10 = {
+					zoom: 6,
+					mapTypeId: google.maps.MapTypeId.TERRAIN,
+				};
+				map10 = new google.maps.Map(document.getElementById('mapCanvas10'), mapOptions10);
+				map10.setCenter(defaultLocation10);
+				var ctaLayer = new google.maps.KmlLayer('http://www.terpconnect.umd.edu/~mschrodr/Geog650KMZ/2010Fire.kmz');
+				ctaLayer.setMap(map10);
+			}
+			function initMap11(){
+				var defaultLocation11 = new google.maps.LatLng(47, -110);
+				var mapOptions11 = {
+					zoom: 6,
+					mapTypeId: google.maps.MapTypeId.TERRAIN,
+				};
+				map11 = new google.maps.Map(document.getElementById('mapCanvas11'), mapOptions11);
+				map11.setCenter(defaultLocation11);
+				var ctaLayer = new google.maps.KmlLayer('http://www.terpconnect.umd.edu/~mschrodr/Geog650KMZ/2011Fire.kmz');
+				ctaLayer.setMap(map11);
+			}
+			function initMap12(){
+				var defaultLocation12 = new google.maps.LatLng(47, -110);
+				var mapOptions12 = {
+					zoom: 6,
+					mapTypeId: google.maps.MapTypeId.TERRAIN,
+				};
+				map12 = new google.maps.Map(document.getElementById('mapCanvas12'), mapOptions12);
+				map12.setCenter(defaultLocation12);
+				var ctaLayer = new google.maps.KmlLayer('http://www.terpconnect.umd.edu/~mschrodr/Geog650KMZ/2012kmz.kmz');
+				ctaLayer.setMap(map12);
+			}
+			function initMap85(){
+				var defaultLocation85 = new google.maps.LatLng(47, -110);
+				var mapOptions85 = {
+					zoom: 6,
+					mapTypeId: google.maps.MapTypeId.TERRAIN,
+				};
+				map85 = new google.maps.Map(document.getElementById('mapCanvas85'), mapOptions85);
+				map85.setCenter(defaultLocation85);
+				var ctaLayer = new google.maps.KmlLayer('http://www.terpconnect.umd.edu/~mschrodr/Geog650KMZ/1985_2011.kmz');
+				ctaLayer.setMap(map85);
+			}
+			function pagereload() {
+					    location.reload();
+					}
+			//CalculateRoute Function
+			function calculateRoute (index) {
+				  faciLocation = searchResults[index].geometry.location;
+				  var faciName = searchResults[index].name;
+				  var request = { origin: currentLocation,
+				  destination: faciLocation,
+				  travelMode: google.maps.DirectionsTravelMode.DRIVING };
+				
+				  directionsService.route(request, function(response, status) {
+				    if (status == google.maps.DirectionsStatus.OK) {
+				      directionsDisplay.setDirections(response);
+				      $("#directions").children().remove();
+				      directionsDisplay.setPanel(document.getElementById('directions'));
+					}
+				});
+				$(document).on( "pageshow", function( e, ui ) {
+				  if ($.mobile.activePage.attr('id') == "mapView") {
+				    var center = map.getCenter();
+				    google.maps.event.trigger(map, "resize");
+				    map.setCenter(center);
+				
+				    var bounds = new google.maps.LatLngBounds();
+				    bounds.extend(currentLocation);
+				    bounds.extend(faciLocation);
+				    map.fitBounds(bounds);
+				  }
+				});
+			}
+			
+			
+			
+			$(document).on("pageinit", "#userinput", function(){
+				$("#btWildfire").on("click", function(e){
+					$.ajax({
+						url: "show_wildfires.php",
+						cache: false,
+						success: processCollisionList
+					});
+				});
+				
+				$("#submit").on("click", function(e){
+					var formData = $("#insertForm").serialize();
+					$.ajax({
+						type: "POST",
+						url: "Enter_Wildfire.php",
+						cache: false,
+						data: formData,
+						success: onSuccess
+					});
+					e.preventDefault();
+				});
+			});
+			function onSuccess(data, status){
+				$("#message").fadeIn(2000);
+				$("#message").css("background-color", "#ff9b1");
+				$("#message").text(data);
+				$("#message").fadeOut(5000);
+			}
+			function processCollisionList(data, status){
+				$("#showWildfire").html(data);
+				$("#showWildfire").listview("refresh");
+			}
+			
+			
+
+			
+			
+		</script>
+		
+		
+		<meta charset="utf-8">
+		<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
+		Remove this if you use the .htaccess -->
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<title>index</title>
+		<meta name="description" content="">
+		<meta name="author" content="Schroeder">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+		<link rel="shortcut icon" href="/favicon.ico">
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+	</head>
+
+
+	<body>
+		<!--Page: Home-->
+		<div id="homeView" data-role="page" data-title="Montana Wildfire Monitoring Home" data-theme="a" >
+			<div id="header1" data-position="fixed" data-role="header">
+				<h1>MT Wildfire Monitoring</h1>
+			</div>
+			<div data-role="content">
+				
+				<img src="images/MT_flag.png" alt="view Source Logo" /> <!--Image from: http://mapsof.net/uploads/static-maps/montana_flag_map.png-->
+				<div data-role="controlgroup" >
+					<a href="#info" data-role="button" data-icon="info" data-theme="a">Information</a>
+					<a href="#findView" data-role="button" data-icon="search" data-theme="a">Find Nearby</a>
+					<a href="#userinput" data-role="button" data-icon="plus" data-theme="a">Enter a Fire</a>
+					<a href="#videos" data-role="button" data-icon="wvc_video" data-theme="a">Videos</a>
+					<a href="#photos" data-role="button" data-icon="wvc_photo" data-theme="a">Photos</a>
+					<a href="#wildfires" data-role="button" data-icon="grid" data-theme="a">Maps</a>
+					
+				</div><!-- Links -->
+				<img src="images/Forest_fire_in_Montana.jpg" alt="view Source Logo"/> <!--Image from: http://www.esa.int/var/esa/storage/images/esa_multimedia/images/2010/11/forest_fire_in_montana/9706465-3-eng-GB/Forest_fire_in_Montana.jpg-->
+				
+			</div><!--Content-->
+		</div><!--page-->
+		
+		<!--Page: Info-->
+		<div id="info" data-role="page" data-theme="a">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+				<h1>Wildfire Info</h1>
+			</div> <!--header-->
+			<div data-role="collapsible">
+			   <h3>Historical MT Fires</h3>
+			   <p>Below are all reported fires from all agencies within Montana with 10 year average. Data was obtained from the DNRC Forestry Division:</p>
+				<a href="http://dnrc.mt.gov/forestry/fire/Statistics/statistics.asp" data-role="button">dnrc.mt.gov</a>
+			   <table id="wildfireyears" class="ui-responsive table-stroke ui-table ui-table-reflow" data-mode="reflow" data-role="table">
+			   	<thead>
+			   		<tr>
+			   			<th data-priority="1">
+			   				Year
+			   			</th>
+			   			<th data-priority="2">
+			   				2002
+			   			</th>
+			   			<th data-priority="3">
+			   				2003
+			   			</th>
+			   			<th data-priority="4">
+			   				2004
+			   			</th>
+			   			<th data-priority="5">
+			   				2005
+			   			</th>
+			   			<th data-priority="6">
+			   				2006
+			   			</th>
+			   			<th data-priority="7">
+			   				2007
+			   			</th>
+			   			<th data-priority="8">
+			   				2008
+			   			</th>
+			   			<th data-priority="9">
+			   				2009
+			   			</th>
+			   			<th data-priority="10">
+			   				2010
+			   			</th>
+			   			<th data-priority="11">
+			   				2011
+			   			</th>
+			   			<th data-priority="12">
+			   				Average
+			   			</th>
+			   		</tr>
+			   	</thead>
+			   	<tbody>
+			   		<tr>
+			   			<td>
+			   				<b class="ui-table-cell-label">Fires</b>
+			   				Acres
+			   			</td>
+			   			<td>
+			   				<b class="ui-table-cell-label">1,415</b>
+			   				111,821
+			   			</td>
+			   			<td>
+			   				<b class="ui-table-cell-label">2,326</b>
+			   				736,809
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,447</b>
+			   				18,445
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,316</b>
+			   				103,294
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">2,302</b>
+			   				1,047,118
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,875</b>
+			   				778,079
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,424</b>
+			   				166,843
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,731</b>
+			   				48,912
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,050</b>
+			   				56,711
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,335</b>
+			   				168,010
+		   				</td>
+		   				<td>
+			   				<b class="ui-table-cell-label">1,622</b>
+			   				323,604
+		   				</td>
+			   		</tr>
+			   	</tbody>
+			   </table>
+			</div>
+			<div data-role="collapsible" >
+				<h2>Background on Wildfires</h2>
+				<div id=infowrite>
+					<p>Fires are a natural occurrence on the landscape and can be both destructive and beneficial to the ecosystems it touches. By looking at charcoal data from North America it can been seen that fire frequency increased between 1750 and 1870 largely due to human population growth. But by the 20th century overall burning decreased, which is likely linked to agriculture expansion, livestock growth, and new fire prevention policies (Nature Geoscience, p697-702). By the 20th century immediate wildfire suppression become policy for US forest service. During 1935 the Forest service adapted its “10 AM Policy” in which all fires need to be under control by 10 o’clock of the morning following the wildfires discovery (Introduction to Wildland Fire, print). But around 1970 Fire Ecology research began to show how naturally caused fires are actually beneficial to forests and can also be an integral part of their further growth (Plants and Vegetation, p666). This in turn led to a complete change in wildfire policy, where fire suppression is reserved only for helping to save lives, property, or endangered wildlife and their habitat. 
+					</p> 
+					<p>This led the forest service and forest firefighters to look into how fires move over different types of terrain features. Studies in fire ecology have begun to look at how the spatial pattern or arrangement of landscapes are often used as filters or places where distinctive pattern for fire (Land Mosaics, p22). A human aspect in fire behavior are its linear roads that run throughout primer wildfire habitats. In 2011 the International Journal of Wildland Fires published a study that was conducted to see what the influences forest road had on the spatial pattern of wildfires. It was concluded that when it comes to fires roads “tend to have the largest influence of any single variable, particularly in lower-elevation landscapes with relatively high road density” and that “roads themselves should be recognized as a unique type of fuel treatment.” (International Journal of Wildland Fire, yr. 2011, p792). Yet roads are only one out of many possible influences that effect wildfire habits and trends over a landscape.
+					</p>
+				</div>
+			</div>
+			<div data-role="collapsible" >
+				<h2>Links to outside resource</h2>
+     			<div id=infowrite>
+     				
+     				<p>Below you can find links to other resources</p>
+	     			<ol>
+	     				<li>Wikipedia.com: <a href="http://en.wikipedia.org/wiki/Wildfire" data-role="button">Wildfires</a></li>
+	     				<li>Ready.gov: <a href="http://www.ready.gov/wildfires" data-role="button">prepare and react</a></li>
+	     				<li>Forest Service: <a href="http://activefiremaps.fs.fed.us/" data-role="button">Active Mapping</a></li>
+	     				<li>Rocky Mountain Research Center: <a href="http://www.firelab.org/" data-role="button">Fire Research</a></li>
+	     				<li>FIRMS: <a href="https://earthdata.nasa.gov/data/near-real-time-data/firms" data-role="button">Resource Management System</a></li>
+	     			</ol>
+     			</div>
+			</div> <!--Contnet-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div> <!--footer-->
+		</div> <!--Page-->
+		
+		<!--Page: Find Nearby-->
+		<div id="findView" data-role="page" data-theme="a">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+				<h1>What's Nearby</h1>
+			</div> <!--header-->
+			<div data-role="content">
+				
+				<ul data-role="listview" data-inset="true">
+					<li id="NPS"><a href="#resultsView">National Parks</a></li>
+					<li id="FS"><a href="#resultsView">Fire Stations</a></li>
+					<li id="USFS"><a href="#resultsView">US Forest Service</a></li>
+				</ul>
+				<h2>Current Location:</h2>
+				<div id="loc"></div>
+				<div id="acc"></div>
+				<a href="#settingsView" data-role="button">Settings</a>
+			</div> <!--Contnet-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div> <!--footer-->
+		</div> <!--Page-->
+		
+		
+		<!--Page: Results-->
+		<div id="resultsView" data-role"page" data-theme="a">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#findView">Find</a>
+				<h1>Results</h1>
+			</div> <!--Header-->
+			<div data-role="content">
+				<ul id="searchResults" data-role="listview" data-inset="true">
+				</ul>
+			</div><!--content-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div><!--Page-->
+		
+		<!--Page: Map-->
+		<div id="mapView" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#resultsView">Results</a>
+				<h1>Map View</h1>
+				<a href="#directionsView">Direction</a>
+			</div><!--header-->
+			<div data-role="content" id="mapDiv" style="width:100%; height:100%;">		
+			</div><!--content-->
+		</div><!--Page-->
+		
+		<!--Page: Direction-->
+		<div id="directionsView" data-role="page" data-theme="b">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#mapView">Map</a>
+				<h1>Directions</h1>
+			</div><!--header-->
+			<div data-role="content">
+				<div id="directions"></div>
+			</div><!--content-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div><!--Page-->
+		
+		
+		<!--Page Settings-->
+		<div id="settingsView" data-role="page" data-theme="a">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#findView">Find</a>
+				<h1>Settings</h1>
+			</div><!--Header-->
+			<div data-role="content">
+				<ul data-role="listview" data-inset="true">
+					<li><a href="#distView">Search Distance <span id="distVal" class="ui-li-aside">3000 Meters</span></a></li>
+				</ul>
+			</div><!--content-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div><!--page-->
+		
+		
+		<!--Page: Distance Settings-->
+		<div id="distView" data-role="page" data-theme="a">
+			<div data-role="header" data-position="fixed">
+				<a href="#settingsView">Settings</a>
+				<h1>Search Distance</h1>
+			</div><!--header-->
+			<div data-role="content">
+				<ul data-role="listview" data-inset="true">
+					<li onclick="updateDist(500)"><a href="#settingsView">500 meters</a></li>
+					<li onclick="updateDist(1000)"><a href="#settingsView">1000 meters</a></li>
+					<li onclick="updateDist(3000)"><a href="#settingsView">3000 meters</a></li>
+					<li onclick="updateDist(5000)"><a href="#settingsView">5000 meters</a></li>
+					<li onclick="updateDist(10000)"><a href="#settingsView">10000 meters</a></li>
+				</ul>
+			</div><!--content-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div><!--page-->
+	
+	
+		<!--Page: Videos-->
+		<div id="videos" data-role="page" data-title="Wildfire Videos" data-theme="a">
+			<div data-role="header" data-position="fixed">
+				<h1>Videos</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--End of header-->
+			
+			<div data-role="content">
+				<div class="ui-grid-a" id="videoList">
+					
+				</div>
+			</div><!--End of Content-->
+			
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div> <!--End of Footer-->
+		</div>
+	
+	
+		<div id="videoPlayer" data-role="page" data-theme="a">
+			<div data-role="header" data-position="fixed">
+				<a href="#videos" data-icon="back" data-iconpos="notext">Videos</a>
+				<h1>Videos</h1>
+			</div><!--Header-->
+			<div data-role="content" id="myPlayer">
+			</div><!--content-->
+		</div><!--page-->
+		
+		
+		<!--Page: Photos-->
+		<div id="photos" data-role="page" data-title="Wildfire Photos" data-theme="a">
+			<div data-role="header" data-position="fixed">
+				<h1>Wildfire Pics</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--Header-->
+			
+			<div data-role="content">
+				<div class="ui-grind-b" id="photoList">
+					
+				</div><!--grid-->
+			</div><!--content-->
+			
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div>
+		
+		<div data-role="page" id="showPhoto" data-theme="a">
+			<div data-role="header" data-position="fixed">
+				<a href="#photos" data-icon="back" data-iconpos="notext">Photos</a>
+				<h1>Photos</h1>
+			</div><!--Header-->
+			<div data-role="content">
+				<div id="myPhoto"></div>
+			</div><!--content-->
+		</div><!--Page-->
+		
+		
+		
+		<div id="userinput" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+				<h1>Enter Wildfire Sightings</h1>
+				<a href="#wildfireView" id="btWildfire" data-icon="info" data-iconpos="notext">Entered Wildfires</a>
+			</div><!--header-->
+			<div data-role="content">
+				<form method="post" id="insertForm">
+					<div data-role="fieldcontain">
+						<fieldset data-role="controlgroup" >
+							<legend><b>Season: </b></legend>
+							<label for="rbSummer">Summer</label>
+							<input type="radio" name="rbSeason" id="rbSummer" value="Summer" checked="checked"/>
+							<label for="rbFall">Fall</label>
+							<input type="radio" name="rbSeason" id="rbFall" value="Fall" checked="checked"/>
+							<label for="rbWinter">Winter</label>
+							<input type="radio" name="rbSeason" id="rbWinter" value="Winter" checked="checked"/>
+							<label for="rbSpring">Spring</label>
+							<input type="radio" name="rbSeason" id="rbSpring" value="Spring" checked="checked"/>
+						</fieldset>
+					</div>
+					<div data-role="fieldcontain">
+						<fieldset data-role="controlgroup" >
+							<legend><b>Classification: </b></legend>
+							<label for="rb1">Wildfire</label>
+							<input type="radio" name="rbClass" id="rb1" value="Natural" checked="checked"/>
+							<label for="rb2">Prescribed Burn</label>
+							<input type="radio" name="rbClass" id="rb2" value="Human"/>
+							<label for="rb3">Unknown</label>
+							<input type="radio" name="rbClass" id="rb3" value="Unknown"/>
+							<label for="rb4">Other</label>
+							<input type="radio" name="rbClass" id="rb4" value="Other"/>
+						</fieldset>
+					</div>
+					<label for="Counties"><b>Species: </b></label>
+					<select id="Counties" name="Counties">
+						<option value="Beaverhead">Beaverhead</option>
+						<option value="Bighorn">Big Horn</option>
+						<option value="Blaine">Blaine</option>
+						<option value="Broadwater">Broadwater</option>
+						<option value="Carbon">Carbon</option>
+						<option value="Carter">Carter</option>
+						<option value="Cascade">Cascade</option>
+						<option value="Chouteau">Chouteau</option>
+						<option value="Custer">Custer</option>
+						<option value="Dainels">Daniels</option>
+						<option value="Dawson">Dawson</option>
+						<option value="Deerlodge">Deer Lodge</option>
+						<option value="Fallon">Fallon</option>
+						<option value="Fergus">Fergus</option>
+						<option value="Flathead">Flathead</option>
+						<option value="Gallatin">Gallatin</option>
+						<option value="Garfield">Garfield</option>
+						<option value="Glacier">Glacier</option>
+						<option value="Goldenvalley">Golden Valley</option>
+						<option value="Granite">Granite</option>
+						<option value="Hill">Hill</option>
+						<option value="Jefferson">Jefferson</option>
+						<option value="Judithbasin">Judith Basin</option>
+						<option value="Lake">Lake</option>
+						<option value="Lewisandclark">Lewis and Clark</option>
+						<option value="Liberty">Liberty</option>
+						<option value="Lincoln">Lincoln</option>
+						<option value="Madison">Madison</option>
+						<option value="Mccone">McCone</option>
+						<option value="Meagher">Meagher</option>
+						<option value="Mineral">Mineral</option>
+						<option value="Missoula">Missoula</option>
+						<option value="Musselshell">Musselshell</option>
+						<option value="Park">Park</option>
+						<option value="Petroleum">Petroleum</option>
+						<option value="Phillips">Phillips</option>
+						<option value="Pondera">Pondera</option>
+						<option value="Powderriver">Powder River</option>
+						<option value="Powell">Powell</option>
+						<option value="Praire">Praire</option>
+						<option value="Ravalli">Ravalli</option>
+						<option value="Richland">Richland</option>
+						<option value="Roosevelt">Roosevelt</option>
+						<option value="Rosebud">Rosebud</option>
+						<option value="Sanders">Sanders</option>
+						<option value="Sheridan">Sheridan</option>
+						<option value="Silverbow">Silver Bow</option>
+						<option value="Stillwater">Stillwater</option>
+						<option value="Sweetgrass">Sweet Grass</option>
+						<option value="Teton">Teton</option>
+						<option value="Toole">Toole</option>
+						<option value="Treasure">Treasure</option>
+						<option value="Valley">Valley</option>
+						<option value="Wheatland">Wheatland</option>
+						<option value="Wibaux">Wibaux</option>
+						<option value="Yellowstone">Yellowstone</option>
+					</select>
+					<!--<label for="txtSpecies" class="ui-hidden-accessible"> </label>
+					<input type="text" id="txtSpecies" name="txtSpecies" value="" placeholder="Type in a new species" />-->
+					
+					<div data-role="fieldcontain">
+						<label for="OBServ"><b>Observed on: </b></label>
+						<input type="date" name="OBServ" id="OBServ" placeholder="mm/dd/yyyy"/>
+					</div>
+					<div data-role="fieldcontain">
+						<label for="lat"><b>Latitude: </b></label>
+						<input type="number" name="lat" id="lat" placeholder="Enter the latitude" min="-90" max="90" step="0.000001"/>
+					</div>
+					<div data-role="fieldcontain">
+						<label for="lng"><b>Longitude: </b></label>
+						<input type="number" name="lng" id="lng" placeholder="Enter the longitude" min="-90" max="90" step="0.000001"/>
+					</div>
+					<div data-role="fieldcontain">
+						<label for="address"><b>Address: </b></label>
+						<input type="text" id="address" name="address" placeholder="Enter the address" />
+					</div>
+					<div data-role="fieldcontain">
+						<label for ="imgFile" class ="leftLabel"><b>Upload a Picture: </b></label>
+						<input type="file" name="imgFile" id="imgFile" class="rightInput" />
+					</div>
+					<fieldset class="ui-grid-a">
+							<div class="ui-block-a"><a href="#homeView" id="cancel" data-role="button">Cancel</a></div>
+							<div class="ui-block-b"><button id="submit" type="submit">Submit</button></div>
+					</fieldset>
+					<h3 id="message"></h3>
+				</form>
+			</div>
+					
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div>
+		
+		<!--Page: List wildfires-->
+		<div id="wildfireView" data-role="page" data-theme="a">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#userinput" data-icon="wvc_input" data-iconpos="notext">Back to Inputs</a>
+				<h1>Wildfire Inputs</h1>
+			</div><!--header-->
+			
+			<div data-role="content">
+				<ul id="showWildfire" data-role="listview" data-inset="true">
+				</ul>
+			</div><!--content-->
+		</div><!--page-->
+		
+		
+		
+		
+		<!--Page: maps-->
+		<div id="wildfires" data-role="page" data-title="Wildfires by year" data-theme="a">
+			<div id="header1" data-position="fixed" data-role="header">
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+				<h1>Montana Wildfires by year</h1>
+			</div>
+			<div data-role="content">
+				<h4>Below are links that will display wildfire occurrences for that particular year. Links for years 2010-2013 are individual MODIS Fire Detection GIS Data obtained from the US Forest Service. </h4>
+				<div data-role="controlgroup" >
+					<a href="#maps" data-role="button" data-icon="grid" data-theme="a">2013</a>
+					<a href="#maps12" data-role="button" data-icon="grid" data-theme="a">2012</a>
+					<a href="#maps11" data-role="button" data-icon="grid" data-theme="a">2011</a>
+					<a href="#maps10" data-role="button" data-icon="grid" data-theme="a">2010</a>
+					<a href="#maps85" data-role="button" data-icon="grid" data-theme="a">1985-2011</a>
+				</div><!-- Links -->
+			</div><!--Content-->
+			<div data-role="footer" data-position="fixed" data-id="footer1">
+				<div data-role="navbar">
+					<ul>
+						<li><a href="#findView" data-role="button" data-icon="search">Find</a></li>
+						<li><a href="#userinput" data-role="button" data-icon="wvc_input">Enter</a></li>
+						<li><a href="#videos" data-role="button" data-icon="wvc_video">Videos</a></li>
+						<li><a href="#photos" data-role="button" data-icon="wvc_photo">Photos</a></li>
+						<li><a href="#wildfires" data-role="button" data-icon="grid">Maps</a></li>
+					</ul>
+				</div> <!--navbar-->
+			</div><!--footer-->
+		</div><!--page-->
+		
+		<!--2013 Fires -->
+		<div id="maps" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#wildfires" data-icon="back" data-iconpos="notext">Back</a>
+				<h1>2013</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--header-->
+			<button onclick="pagereload()">Click here if Map Error</button>
+			<div data-role="content" id="mapCanvas" style="width:100%; height:100%;">
+				
+			</div><!--content-->
+		</div><!--page-->
+		<!--2012 Fires -->
+		<div id="maps12" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#wildfires" data-icon="back" data-iconpos="notext">Back</a>
+				<h1>2012</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--header-->
+			<button onclick="pagereload()">Click here if Map Error</button>
+			<div data-role="content" id="mapCanvas12" style="width:100%; height:100%;">
+				
+			</div><!--content-->
+		</div><!--page-->
+		<!--2011 Fires -->
+		<div id="maps11" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#wildfires" data-icon="back" data-iconpos="notext">Back</a>
+				<h1>2011</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--header-->
+			<button onclick="pagereload()">Click here if Map Error</button>
+			<div data-role="content" id="mapCanvas11" style="width:100%; height:100%;">	
+				
+			</div><!--content-->
+		</div><!--page-->
+		<!--2010 Fires -->
+		<div id="maps10" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#wildfires" data-icon="back" data-iconpos="notext">Back</a>
+				<h1>2010</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--header-->
+			<button onclick="pagereload()">Click here if Map Error</button>
+			<div data-role="content" id="mapCanvas10" style="width:100%; height:100%;">
+				
+			</div><!--content-->
+		</div><!--page-->
+		<!--1985-2011 Fires -->
+		<div id="maps85" data-role="page" data-theme="a">
+			<div data-position="fixed" data-role="header">
+				<a href="#wildfires" data-icon="back" data-iconpos="notext">Back</a>
+				<h1>1985-2011</h1>
+				<a href="#homeView" data-icon="home" data-iconpos="notext">Homepage</a>
+			</div><!--header-->
+			<button onclick="pagereload()">Click here if Map Error</button>
+			<div data-role="content" id="mapCanvas85" style="width:100%; height:100%;">
+				
+			</div><!--content-->
+		</div><!--page-->
+	</body>
+</html>
