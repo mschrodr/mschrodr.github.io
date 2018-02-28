@@ -5,8 +5,9 @@
 		<title>Matthew Schroeder Resume Site</title>
 		<link href="layout.css" rel="stylesheet" type="text/css" media="screen" />
 		<link href="content.css" rel="stylesheet" type="text/css" media="screen"/>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 		<link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
-		  <script src="https://js.arcgis.com/4.6/"></script>
+		<script src="https://js.arcgis.com/4.6/"></script>
   		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 
 		<script>
@@ -42,46 +43,66 @@
 	<body>
 		<div id="container">
 			<div id="header">
-				<h1><b>Matthew Schroeder</b></h1>
-				<p>Washington D.C.</p>
+				<div class="row">
+					<div class="col-lg-12">
+						<h1><b>Matthew Schroeder</b></h1>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-lg-12">
+						<p>Washington D.C.</p>
+					</div>
+				</div>
 			</div>
-			<div id="nav">
-				<ul>
-				<li><a href="index.html">Home</a></li>
-				<li><a href="Undergrad.html">Undergrad Work</a></li>
-				<li><a href="Graduate.html">Graduate Work</a></li>
-                <li><a href="Intern.html">Internship & Workstudies</a></li>
-                <li><a href="3E.html">3E Consultings</a></li>
-				<li><a href="Masy.html">The MASY Group</a></li>
-				<li><a href="Personal.html">Personal GIS Work</a></li>
-                <li><a href="Army.html">Army</a></li>
-				<li><a href="About_Me.html">Contact Me</a></li>
-				<li><a href="https://www.linkedin.com/in/schrodermatthew/" target="_blank"><img src="images/linkedin-logo.png" width="25" height="25"></a></li>
-				</ul>
+			<div class="row">
+					<div class="col-lg-12">
+						<div id="nav">
+							<ul>
+							<li><a href="index.html">Home</a></li>
+							<li><a href="Undergrad.html">Undergrad Work</a></li>
+							<li><a href="Graduate.html">Graduate Work</a></li>
+							<li><a href="Intern.html">Internship & Workstudies</a></li>
+							<li><a href="3E.html">3E Consultings</a></li>
+							<li><a href="Masy.html">The MASY Group</a></li>
+							<li><a href="Personal.html">Personal GIS Work</a></li>
+							<li><a href="Army.html">Army</a></li>
+							<li><a href="About_Me.html">Contact Me</a></li>
+							<li><a href="https://www.linkedin.com/in/schrodermatthew/" target="_blank"><img src="images/linkedin-logo.png" width="25" height="25"></a></li>
+							</ul>
+						</div>
+					</div>
 				</div>
 
-				<div id="content"><div id="Map"></div>
-					<h1>The University of Maryland: Master of Professional Studies GIS (2015)</h1>
-					<p> The University of Maryland's Master of Professional Studies in Geospatial Information Sciences Program is dedicated to providing the 
-						most up-to-date training on geospatial technology, theory and applications. The courses cover spatial analysis, remote sensing, spatial statistics, 
-						modeling, programming and scripting, spatial databases, Internet GIS, and Mobile GIS.
-						</p>
-						<h1>Courses taken while at Maryland</h1>
-						<ul style="list-style-type:circle">
-						<li>Advanced Remote Sensing</li>
-						<li>Digital Image Processing and Analysis</li>
-						<li>GIS and Spatial Analysis</li>
-						<li>GIS and Spatial Modeling</li>
-						<li>Internet GIS</li>
-						<li>Mobile GIS</li>
-						<li>Professional Project</li>
-						<li>Programming and Scripting for GIS</li>
-						<li>Spatial Database System</li>
-						<li>Spatial Statistics</li>
-						<li>Web Programming</li>
-						</ul><br>
+				<div id="content">
+					<div class="row">
+							<div class="col-lg-7" >
+								<h1>The University of Maryland: Master of Professional Studies GIS (2015)</h1>
+								<p> The University of Maryland's Master of Professional Studies in Geospatial Information Sciences Program is dedicated to providing the 
+								most up-to-date training on geospatial technology, theory and applications. The courses cover spatial analysis, remote sensing, spatial statistics, 
+								modeling, programming and scripting, spatial databases, Internet GIS, and Mobile GIS.
+								</p>
+								<h1>Courses taken while at Maryland</h1>
+									<ul style="list-style-type:circle">
+									<li>Advanced Remote Sensing</li>
+									<li>Digital Image Processing and Analysis</li>
+									<li>GIS and Spatial Analysis</li>
+									<li>GIS and Spatial Modeling</li>
+									<li>Internet GIS</li>
+									<li>Mobile GIS</li>
+									<li>Professional Project</li>
+									<li>Programming and Scripting for GIS</li>
+									<li>Spatial Database System</li>
+									<li>Spatial Statistics</li>
+									<li>Web Programming</li>
+								</ul>
+							</div>
+							<div class="col-lg-5">
+								<h4>Univerity of Maryland Campus:</h4>
+								<div id="Map"></div>
+							</div>
+						</div>
 
-						<h1>Mapping Examples</h1>
+						<h3>Mapping Examples:</h3>
 						<h2>Long Point Peninsula, Massachusetts Change Detection</h2>
 						<img src="images/3E/Graduate_Remote_Sensing_ChangeDetection.jpg" alt="Change Detection" width="75%" height="auto"/><br><br>
 						
@@ -99,7 +120,8 @@
 
 				</div>
 				<div id="footer">
-				<p>&copy; Matthew Schroeder 2018</p>
+					<p>&copy; Matthew Schroeder 2018 (Website)</p>
+					<p>&copy; Heinrich Berann (Background image)</p>
 				</div>
 			</div>
 		</div>
